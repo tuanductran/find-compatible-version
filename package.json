@@ -3,12 +3,10 @@
     "version": "1.0.0",
     "description": "A package to find compatible versions of npm packages based on dependency requirements.",
     "main": "dist/index.js",
-    "module": "dist/index.mts",
     "types": "dist/index.d.ts",
     "scripts": {
         "build": "tsc",
-        "test": "echo \"Error: no test specified\" && exit 1",
-        "start": "node dist/index.js"
+        "test": "echo \"Error: no test specified\" && exit 1"
     },
     "keywords": ["npm", "dependency", "version", "compatibility"],
     "author": "Tuan Duc Tran <tuanductran.dev@gmail.com>",
