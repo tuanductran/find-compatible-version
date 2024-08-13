@@ -1,0 +1,22 @@
+{
+    "name": "find-compatible-version",
+    "version": "1.0.0",
+    "description": "A package to find compatible versions of npm packages based on dependency requirements.",
+    "main": "dist/index.js",
+    "module": "dist/index.mts",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc",
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "start": "node dist/index.js"
+    },
+    "keywords": ["npm", "dependency", "version", "compatibility"],
+    "author": "Tuan Duc Tran <tuanductran.dev@gmail.com>",
+    "license": "ISC",
+    "devDependencies": {
+        "@types/node": "^22.2.0",
+        "@types/semver": "^7.5.8",
+        "semver": "^7.5.4",
+        "typescript": "^5.5.4"
+    }
+}
