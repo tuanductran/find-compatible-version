@@ -18,12 +18,12 @@ You can use the `findCompatibleVersion` function to check for a package's compat
 import { findCompatibleVersion } from 'find-compatible-version'
 
 async function checkCompatibility() {
-  const packageName = 'your-package-name'
-  const versionFrom = '1.0.0'
-  const dependencyName = 'your-dependency-name'
-  const requiredDepVersion = '2.0.0'
+  const upperPackage = 'your-package-name'
+  const startingVersion = '1.0.0'
+  const subDependency = 'your-dependency-name'
+  const targetSubDepVersion = '2.0.0'
 
-  const compatibleVersion = await findCompatibleVersion(packageName, versionFrom, dependencyName, requiredDepVersion)
+  const compatibleVersion = await findCompatibleVersion(upperPackage, startingVersion, subDependency, targetSubDepVersion)
   console.log(`Compatible version: ${compatibleVersion}`)
 }
 
@@ -32,10 +32,10 @@ checkCompatibility()
 
 ## Parameters
 
-- packageName: The name of the npm package you want to check.
-- versionFrom: The version you want to compare against.
-- dependencyName: The name of the dependency you are interested in.
-- requiredDepVersion: The minimum required version of the dependency.
+* @param upperPackage - The name of the package to check.
+* @param startingVersion - The version to start searching from.
+* @param subDependency - The sub-dependency to find in the package.
+* @param targetSubDepVersion - The minimum required version of the sub-dependency.
 
 ## License
 
