@@ -1,51 +1,70 @@
-import { promisify } from 'util';
-import { exec as execCallback } from 'child_process';
-import semver from 'semver';
+import { promisify } from 'node:util'
+import { exec as execCallback } from 'node:child_process'
+import semver from 'semver'
 
-const exec = promisify(execCallback);
+const exec = promisify(execCallback)
 
 /**
- * Finds a compatible version of an npm package based on the dependency requirements.
- * 
- * @param packageName - The name of the package to check.
- * @param versionFrom - The version to compare against.
- * @param dependencyName - The name of the dependency to check compatibility.
- * @param requiredDepVersion - The required version of the dependency.
- * @returns The compatible version of the package or undefined if none found.
+ * Asynchronously finds the first version of the upper package that includes
+ * a specified sub-dependency version or a newer one.
+ *
+ * @param upperPackage - The name of the package to check.
+ * @param startingVersion - The version to start searching from.
+ * @param subDependency - The sub-dependency to find in the package.
+ * @param targetSubDepVersion - The minimum required version of the sub-dependency.
  */
-export async function findCompatibleVersion(
-    packageName: string, 
-    versionFrom: string, 
-    dependencyName: string, 
-    requiredDepVersion: string
-): Promise<string | undefined> {
-    console.log('Starting version compatibility search...');
+export async function findMatchingVersion(
+  upperPackage: string,
+  startingVersion: string,
+  subDependency: string,
+  targetSubDepVersion: string,
+): Promise<void> {
+  console.log(`Starting the search process...`)
 
-    try {
-        console.log(`Fetching versions for ${packageName} starting from ${versionFrom}...`);
-        const { stdout: versionData } = await exec(`npm view ${packageName} versions --json`);
-        const availableVersions = JSON.parse(versionData).filter((version: string) => semver.gte(version, versionFrom));
-        
-        console.log(`Total available versions for ${packageName}: ${availableVersions.length}`);
+  try {
+    // Fetch all versions of the specified upper package
+    console.log(`Fetching all versions of ${upperPackage} starting from ${startingVersion}...`)
+    const { stdout: versions } = await exec(`npm view ${upperPackage} versions --json`)
+    const allVersions = JSON.parse(versions).filter((version: string) => semver.gte(version, startingVersion))
 
-        for (const version of availableVersions) {
-            console.log(`Checking ${packageName}@${version}...`);
-            const { stdout: dependencyData } = await exec(`npm view ${packageName}@${version} dependencies --json`);
-            const dependencies = JSON.parse(dependencyData || '{}');
+    console.log(`Total relevant versions fetched for ${upperPackage}: ${allVersions.length}`)
 
-            if (dependencies[dependencyName]) {
-                const dependencyVersionRange = dependencies[dependencyName];
-                const minimumVersion = semver.minVersion(dependencyVersionRange);
+    // Search for the first version that includes the target sub-dependency version
+    console.log(`Searching for the first version of ${upperPackage} that includes ${subDependency}@${targetSubDepVersion} or newer...`)
+    for (const version of allVersions) {
+      console.log(`Checking ${upperPackage}@${version} ...`)
+      const { stdout: deps } = await exec(`npm view ${upperPackage}@${version} dependencies --json`)
+      const dependencies = JSON.parse(deps || '{}')
 
-                if (minimumVersion && semver.gte(minimumVersion, requiredDepVersion)) {
-                    console.log(`Compatible version found: ${packageName}@${version} includes ${dependencyName} version ${minimumVersion}, satisfying the requirement of ${requiredDepVersion} or higher.`);
-                    return version; // Return the compatible version
-                }
-            }
+      // Check if the sub-dependency exists and if it meets the version requirement
+      if (dependencies[subDependency]) {
+        const currentSubDepVersionRange = dependencies[subDependency]
+        console.log(`Actual version of ${subDependency} in ${upperPackage}@${version}: ${currentSubDepVersionRange}`)
+
+        const minVersion = semver.minVersion(currentSubDepVersionRange)
+        if (minVersion && semver.gte(minVersion, targetSubDepVersion)) {
+          console.log(`Match found: ${upperPackage}@${version} includes ${subDependency} version ${minVersion} which satisfies the requirement of ${targetSubDepVersion} or higher.`)
+          return // Exit once a match is found
         }
-
-        console.log('No compatible version found.');
-    } catch (error) {
-        console.error('An error occurred during the search:', error);
+      }
     }
+
+    console.log(`No matching version found for the specified criteria.`)
+  }
+  catch (error) {
+    console.error('An error occurred during the search:', error)
+  }
+}
+
+// Extract command line arguments for usage in the script
+const [,, currentPackageVersion, targetSubDep] = process.argv
+
+if (!currentPackageVersion || !targetSubDep) {
+  console.log('Missing arguments. Please provide the current package version and the target sub-dependency version.')
+  console.log('Usage: findMatchingVersion(\'current-package\', \'version\', \'sub-dependency\', \'target-version\')')
+}
+else {
+  const [upperPackage, startingVersion] = currentPackageVersion.split('@')
+  const [subDependency, targetSubDepVersion] = targetSubDep.split('@')
+  findMatchingVersion(upperPackage, startingVersion, subDependency, targetSubDepVersion)
 }
