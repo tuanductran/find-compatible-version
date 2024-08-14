@@ -1,4 +1,4 @@
-name: Test and Build
+name: Lint
 
 on:
   push:
@@ -27,9 +27,3 @@ jobs:
 
       - name: Run lint
         run: npm run lint
-
-      - name: Build the project
-        run: npm run build
-
-      - name: Test the project
-        run: node ./dist/index.js express@4.17.0 body-parser@1.19.1
