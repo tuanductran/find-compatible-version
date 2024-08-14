@@ -20,6 +20,7 @@
   ],
   "scripts": {
     "build": "tsup",
+    "postinstall": "npm run build",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },
@@ -31,7 +32,6 @@
     "eslint": "^9.9.0",
     "eslint-plugin-format": "^0.1.2",
     "semver": "^7.5.4",
-    "ts-node": "^10.9.2",
     "tsup": "^8.2.4",
     "typescript": "^5.5.4"
   }
