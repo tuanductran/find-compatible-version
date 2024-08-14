@@ -32,10 +32,10 @@ checkCompatibility()
 
 ## Parameters
 
-* @param upperPackage - The name of the package to check.
-* @param startingVersion - The version to start searching from.
-* @param subDependency - The sub-dependency to find in the package.
-* @param targetSubDepVersion - The minimum required version of the sub-dependency.
+- @param upperPackage - The name of the package to check.
+- @param startingVersion - The version to start searching from.
+- @param subDependency - The sub-dependency to find in the package.
+- @param targetSubDepVersion - The minimum required version of the sub-dependency.
 
 ## License
 

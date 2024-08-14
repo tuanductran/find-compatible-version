@@ -7,5 +7,10 @@ export default antfu({
   rules: {
     'node/prefer-global/process': 'off',
     'no-console': 'off',
+    'ts/no-explicit-any': 'off',
+    'ts/no-unused-vars': ['warn', {
+      argsIgnorePattern: '^_',
+    }],
+    'prefer-const': 'error',
   },
 })

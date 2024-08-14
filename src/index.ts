@@ -1,6 +1,6 @@
 import { promisify } from 'node:util'
 import { exec as execCallback } from 'node:child_process'
-import semver from 'semver'
+import { gte, minVersion } from 'semver'
 
 const exec = promisify(execCallback)
 
@@ -24,32 +24,44 @@ export async function findMatchingVersion(
   try {
     // Fetch all versions of the specified upper package
     console.log(`Fetching all versions of ${upperPackage} starting from ${startingVersion}...`)
-    const { stdout: versions } = await exec(`npm view ${upperPackage} versions --json`)
-    const allVersions = JSON.parse(versions).filter((version: string) => semver.gte(version, startingVersion))
 
-    console.log(`Total relevant versions fetched for ${upperPackage}: ${allVersions.length}`)
+    const sanitizedUpperPackage = upperPackage.replace(/[^\w-]/g, '')
+    const { stdout: versions } = await exec(`npm view ${sanitizedUpperPackage} versions --json`)
+
+    // Filter versions to only keep valid semantic versioning (exclude pre-releases)
+    const allVersions = JSON.parse(versions)
+      .filter((version: string) => gte(version, startingVersion) && /^\d+\.\d+\.\d+$/.test(version))
+
+    if (allVersions.length === 0) {
+      console.log('No versions found that meet the starting version criteria.')
+      return
+    }
+
+    console.log(`Total relevant versions fetched for ${sanitizedUpperPackage}: ${allVersions.length}`)
 
     // Search for the first version that includes the target sub-dependency version
-    console.log(`Searching for the first version of ${upperPackage} that includes ${subDependency}@${targetSubDepVersion} or newer...`)
+    console.log(`Searching for the first version of ${sanitizedUpperPackage} that includes ${subDependency}@${targetSubDepVersion} or newer...`)
     for (const version of allVersions) {
-      console.log(`Checking ${upperPackage}@${version} ...`)
-      const { stdout: deps } = await exec(`npm view ${upperPackage}@${version} dependencies --json`)
+      console.log(`Checking ${sanitizedUpperPackage}@${version} ...`)
+
+      const sanitizedVersion = version.replace(/[^\w.-]/g, '')
+      const { stdout: deps } = await exec(`npm view ${sanitizedUpperPackage}@${sanitizedVersion} dependencies --json`)
       const dependencies = JSON.parse(deps || '{}')
 
       // Check if the sub-dependency exists and if it meets the version requirement
       if (dependencies[subDependency]) {
         const currentSubDepVersionRange = dependencies[subDependency]
-        console.log(`Actual version of ${subDependency} in ${upperPackage}@${version}: ${currentSubDepVersionRange}`)
+        console.log(`Actual version of ${subDependency} in ${sanitizedUpperPackage}@${sanitizedVersion}: ${currentSubDepVersionRange}`)
 
-        const minVersion = semver.minVersion(currentSubDepVersionRange)
-        if (minVersion && semver.gte(minVersion, targetSubDepVersion)) {
-          console.log(`Match found: ${upperPackage}@${version} includes ${subDependency} version ${minVersion} which satisfies the requirement of ${targetSubDepVersion} or higher.`)
+        const dependenciesVersion = minVersion(currentSubDepVersionRange)
+        if (dependenciesVersion && gte(dependenciesVersion, targetSubDepVersion)) {
+          console.log(`Match found: ${sanitizedUpperPackage}@${sanitizedVersion} includes ${subDependency} version ${dependenciesVersion} which satisfies the requirement of ${targetSubDepVersion} or higher.`)
           return // Exit once a match is found
         }
       }
     }
 
-    console.log(`No matching version found for the specified criteria.`)
+    console.log('No matching version found for the specified criteria.')
   }
   catch (error) {
     console.error('An error occurred during the search:', error)
@@ -66,5 +78,5 @@ if (!currentPackageVersion || !targetSubDep) {
 else {
   const [upperPackage, startingVersion] = currentPackageVersion.split('@')
   const [subDependency, targetSubDepVersion] = targetSubDep.split('@')
-  findMatchingVersion(upperPackage, startingVersion, subDependency, targetSubDepVersion)
+  findMatchingVersion(upperPackage, startingVersion, subDependency, targetSubDepVersion).catch(console.error)
 }
