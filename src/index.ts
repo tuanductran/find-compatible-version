@@ -1,12 +1,9 @@
-import { promisify } from 'node:util'
-import { exec as execCallback } from 'node:child_process'
+import axios from 'axios'
 import { gte, minVersion } from 'semver'
 
-const exec = promisify(execCallback)
-
 /**
- * Asynchronously finds the first version of the upper package that includes
- * a specified sub-dependency version or a newer one.
+ * Asynchronously retrieves the first version of the specified package that satisfies
+ * the minimum required version for a specified sub-dependency using the npmjs API.
  *
  * @param upperPackage - The name of the package to check.
  * @param startingVersion - The version to start searching from.
@@ -19,64 +16,67 @@ export async function findMatchingVersion(
   subDependency: string,
   targetSubDepVersion: string,
 ): Promise<void> {
-  console.log(`Starting the search process...`)
+  console.log(`Initiating search for ${upperPackage}...`)
 
   try {
-    // Fetch all versions of the specified upper package
-    console.log(`Fetching all versions of ${upperPackage} starting from ${startingVersion}...`)
+    // Fetch all versions of the upper package using the npm registry API
+    const { data: { versions } } = await axios.get(`https://registry.npmjs.org/${upperPackage}`)
 
-    const sanitizedUpperPackage = upperPackage.replace(/[^\w-]/g, '')
-    const { stdout: versions } = await exec(`npm view ${sanitizedUpperPackage} versions --json`)
-
-    // Filter versions to only keep valid semantic versioning (exclude pre-releases)
-    const allVersions = JSON.parse(versions)
-      .filter((version: string) => gte(version, startingVersion) && /^\d+\.\d+\.\d+$/.test(version))
+    // Filter and sort valid versions
+    const allVersions = Object.keys(versions)
+      .filter(version => gte(version, startingVersion) && /^\d+\.\d+\.\d+$/.test(version))
+      .sort((a, b) => (a < b ? -1 : 1)) // Ensure versions are sorted in ascending order
 
     if (allVersions.length === 0) {
-      console.log('No versions found that meet the starting version criteria.')
+      console.warn('No versions found matching the starting version criteria.')
       return
     }
 
-    console.log(`Total relevant versions fetched for ${sanitizedUpperPackage}: ${allVersions.length}`)
+    console.log(`Total relevant versions found for ${upperPackage}: ${allVersions.length}`)
 
-    // Search for the first version that includes the target sub-dependency version
-    console.log(`Searching for the first version of ${sanitizedUpperPackage} that includes ${subDependency}@${targetSubDepVersion} or newer...`)
+    // Iterate through versions to find a matching sub-dependency
     for (const version of allVersions) {
-      console.log(`Checking ${sanitizedUpperPackage}@${version} ...`)
+      console.log(`Checking ${upperPackage}@${version}...`)
+      const currentVersion = versions[version]
+      const dependencies = currentVersion.dependencies || {}
 
-      const sanitizedVersion = version.replace(/[^\w.-]/g, '')
-      const { stdout: deps } = await exec(`npm view ${sanitizedUpperPackage}@${sanitizedVersion} dependencies --json`)
-      const dependencies = JSON.parse(deps || '{}')
-
-      // Check if the sub-dependency exists and if it meets the version requirement
+      // If the sub-dependency exists, validate its version
       if (dependencies[subDependency]) {
         const currentSubDepVersionRange = dependencies[subDependency]
-        console.log(`Actual version of ${subDependency} in ${sanitizedUpperPackage}@${sanitizedVersion}: ${currentSubDepVersionRange}`)
+        const actualSubDepVersion = minVersion(currentSubDepVersionRange)
 
-        const dependenciesVersion = minVersion(currentSubDepVersionRange)
-        if (dependenciesVersion && gte(dependenciesVersion, targetSubDepVersion)) {
-          console.log(`Match found: ${sanitizedUpperPackage}@${sanitizedVersion} includes ${subDependency} version ${dependenciesVersion} which satisfies the requirement of ${targetSubDepVersion} or higher.`)
-          return // Exit once a match is found
+        if (actualSubDepVersion && gte(actualSubDepVersion, targetSubDepVersion)) {
+          console.log(`Match found: ${upperPackage}@${version} includes ${subDependency} version ${actualSubDepVersion} satisfying the minimum requirement of ${targetSubDepVersion}.`)
+          return // Return after the first match is found
         }
       }
     }
 
-    console.log('No matching version found for the specified criteria.')
+    console.info('No matching version found for the specified criteria.')
   }
   catch (error) {
-    console.error('An error occurred during the search:', error)
+    console.error('Error occurred while searching:', error)
   }
 }
 
-// Extract command line arguments for usage in the script
+// Handling command-line arguments for invocation
 const [,, currentPackageVersion, targetSubDep] = process.argv
 
 if (!currentPackageVersion || !targetSubDep) {
-  console.log('Missing arguments. Please provide the current package version and the target sub-dependency version.')
-  console.log('Usage: findMatchingVersion(\'current-package\', \'version\', \'sub-dependency\', \'target-version\')')
+  console.error('Missing required arguments. Provide the current package version and the target sub-dependency version.')
+  console.log('Usage: findMatchingVersion(\'current-package@starting-version\', \'sub-dependency@target-version\')')
+  process.exit(1)
+}
+
+const [upperPackage, startingVersion] = currentPackageVersion.split('@')
+const [subDependency, targetSubDepVersion] = targetSubDep.split('@')
+
+// Validate input formats to protect against injection attacks
+if (upperPackage && startingVersion && subDependency && targetSubDepVersion) {
+  findMatchingVersion(upperPackage, startingVersion, subDependency, targetSubDepVersion)
+    .catch(console.error)
 }
 else {
-  const [upperPackage, startingVersion] = currentPackageVersion.split('@')
-  const [subDependency, targetSubDepVersion] = targetSubDep.split('@')
-  findMatchingVersion(upperPackage, startingVersion, subDependency, targetSubDepVersion).catch(console.error)
+  console.error('Invalid input parameters. Ensure inputs are formatted correctly.')
+  process.exit(1)
 }
