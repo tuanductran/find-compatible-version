@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { FormEvent, useState } from 'react'
 import { findMatchingVersion } from 'find-compatible-version'
 import { Box, Button, Container, TextField, Typography } from '@mui/material'
 
@@ -8,7 +8,7 @@ function App() {
   const [subDependency, setSubDependency] = useState<string>('')
   const [subDepVersion, setSubDepVersion] = useState<string>('')
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     await findMatchingVersion(dependency, dependencyVersion, subDependency, subDepVersion)
   }
@@ -29,7 +29,7 @@ function App() {
         <form onSubmit={handleSubmit} style={{ width: '100%' }}>
           <TextField
             fullWidth
-            label="Dependency"
+            label="Dependency (e.g: express)"
             variant="outlined"
             value={dependency}
             onChange={e => setDependency(e.target.value)}
@@ -40,7 +40,7 @@ function App() {
           />
           <TextField
             fullWidth
-            label="Dependency Version"
+            label="Dependency Version (e.g: 4.19.2)"
             variant="outlined"
             value={dependencyVersion}
             onChange={e => setDependencyVersion(e.target.value)}
@@ -51,7 +51,7 @@ function App() {
           />
           <TextField
             fullWidth
-            label="Sub Dependency"
+            label="Sub Dependency (e.g: body-parser)"
             variant="outlined"
             value={subDependency}
             onChange={e => setSubDependency(e.target.value)}
@@ -62,7 +62,7 @@ function App() {
           />
           <TextField
             fullWidth
-            label="Sub Dependency Version"
+            label="Sub Dependency Version (e.g: 1.20.2)"
             variant="outlined"
             value={subDepVersion}
             onChange={e => setSubDepVersion(e.target.value)}
