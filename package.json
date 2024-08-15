@@ -1,37 +1,17 @@
 {
-  "name": "find-compatible-version",
-  "version": "1.0.0",
-  "description": "A package to find compatible versions of npm packages based on dependency requirements.",
-  "author": "Tuan Duc Tran <tuanductran.dev@gmail.com>",
-  "license": "ISC",
-  "keywords": ["npm", "dependency", "version", "compatibility"],
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+    "name": "my-app",
+    "version": "1.0.0",
+    "description": "",
+    "packageManager": "pnpm@9.7.0",
+    "scripts": {
+        "build": "turbo run build --filter=./packages/\\*",
+        "dev": "pnpm --filter web dev",
+        "check-types": "turbo run check-types"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "turbo": "^2.0.12"
     }
-  },
-  "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
-  "scripts": {
-    "build": "tsc",
-    "prepare": "npm run build",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
-  },
-  "devDependencies": {
-    "@antfu/eslint-config": "^2.25.1",
-    "@types/node": "^22.2.0",
-    "@types/semver": "^7.5.8",
-    "axios": "^1.7.4",
-    "eslint": "^9.9.0",
-    "eslint-plugin-format": "^0.1.2",
-    "semver": "^7.5.4",
-    "typescript": "^5.5.4"
-  }
 }

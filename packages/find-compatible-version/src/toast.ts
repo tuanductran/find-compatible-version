@@ -1,18 +1,18 @@
-interface ToastFunction {
-  success: (message: string, additionalInfo?: unknown) => void
-  warn: (message: string, additionalInfo?: unknown) => void
-  info: (message: string, additionalInfo?: unknown) => void
-  error: (message: string, additionalInfo?: unknown) => void
+export interface ToastFunction {
+  success: (message: string, additionalInfo?: unknown) => void;
+  warn: (message: string, additionalInfo?: unknown) => void;
+  info: (message: string, additionalInfo?: unknown) => void;
+  error: (message: string, additionalInfo?: unknown) => void;
 }
 
-let toastFn: ToastFunction | null = null
+let toastFn: ToastFunction | null = null;
 
 /**
  * Sets the toast notification function to the provided implementation.
  * @param fn - The toast function to be set.
  */
 export function setToastFunction(fn: ToastFunction): void {
-  toastFn = fn
+  toastFn = fn;
 }
 
 /**
@@ -21,7 +21,7 @@ export function setToastFunction(fn: ToastFunction): void {
  * @param additionalInfo - Optional additional information related to the success.
  */
 export function notifySuccess(message: string, additionalInfo?: unknown): void {
-  toastFn?.success(message, additionalInfo)
+  toastFn?.success(message, additionalInfo);
 }
 
 /**
@@ -30,7 +30,7 @@ export function notifySuccess(message: string, additionalInfo?: unknown): void {
  * @param additionalInfo - Optional additional information related to the warning.
  */
 export function notifyWarn(message: string, additionalInfo?: unknown): void {
-  toastFn?.warn(message, additionalInfo)
+  toastFn?.warn(message, additionalInfo);
 }
 
 /**
@@ -39,7 +39,7 @@ export function notifyWarn(message: string, additionalInfo?: unknown): void {
  * @param additionalInfo - Optional additional information related to the info.
  */
 export function notifyInfo(message: string, additionalInfo?: unknown): void {
-  toastFn?.info(message, additionalInfo)
+  toastFn?.info(message, additionalInfo);
 }
 
 /**
@@ -48,5 +48,5 @@ export function notifyInfo(message: string, additionalInfo?: unknown): void {
  * @param additionalInfo - Optional additional information related to the error.
  */
 export function notifyError(message: string, additionalInfo?: unknown): void {
-  toastFn?.error(message, additionalInfo)
+  toastFn?.error(message, additionalInfo);
 }
