@@ -34,3 +34,4 @@ $RECYCLE.BIN/
 *.msp
 *.lnk
 *.turbo
+.vercel

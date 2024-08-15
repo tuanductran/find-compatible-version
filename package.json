@@ -1,17 +1,22 @@
 {
-    "name": "my-app",
-    "version": "1.0.0",
-    "description": "",
-    "packageManager": "pnpm@9.7.0",
-    "scripts": {
-        "build": "turbo run build --filter=./packages/\\*",
-        "dev": "pnpm --filter web dev",
-        "check-types": "turbo run check-types"
-    },
-    "keywords": [],
-    "author": "",
-    "license": "ISC",
-    "devDependencies": {
-        "turbo": "^2.0.12"
-    }
+  "name": "my-app",
+  "version": "1.0.0",
+  "packageManager": "pnpm@9.7.0",
+  "description": "",
+  "author": "",
+  "license": "ISC",
+  "keywords": [],
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "pnpm --filter web dev",
+    "check-types": "turbo run check-types",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^2.25.1",
+    "eslint": "^9.9.0",
+    "eslint-plugin-format": "^0.1.2",
+    "turbo": "^2.0.12"
+  }
 }
