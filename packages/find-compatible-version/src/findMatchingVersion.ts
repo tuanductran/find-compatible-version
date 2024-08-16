@@ -1,9 +1,16 @@
 import axios from 'axios'
 import { gte, minVersion, rcompare, valid } from 'semver'
-import { notifyError, notifyInfo, notifyWarn } from './toast'
+import { notifyError, notifySuccess, notifyWarn } from './toast'
+import { isEmpty } from './isEmpty'
+
+interface VersionData {
+  versions: Record<string, {
+    dependencies?: Record<string, string>
+  }>
+}
 
 /**
- * Asynchronously retrieves the earliest compatible version of the specified package that satisfies
+ * Asynchronously retrieves the latest compatible version of the specified package that satisfies
  * the minimum required version for a given sub-dependency using the npm registry API.
  *
  * @param upperPackage - The name of the package to check.
@@ -17,42 +24,54 @@ export async function findMatchingVersion(
   subDependency: string,
   targetSubDepVersion: string,
 ): Promise<void> {
-  notifyInfo(`Initiating search for package: ${upperPackage}...`)
-
   try {
-    const { data } = await axios.get(`https://registry.npmjs.org/${upperPackage}`)
-    const versions = data.versions
+    const { data } = await axios.get<VersionData>(`https://registry.npmjs.org/${upperPackage}`)
+    const versions = data.versions || {}
 
-    // Filter and sort versions that are valid and greater than or equal to the starting version
-    const filteredVersions = Object.keys(versions)
-      .filter(version => valid(version) && gte(version, startingVersion))
-      .sort(rcompare) // Using rcompare for descending order
-
-    if (filteredVersions.length === 0) {
-      notifyWarn(`No versions found for ${upperPackage} matching the specified starting version criteria.`)
+    if (isEmpty(versions)) {
+      notifyWarn(`No versions found for ${upperPackage}.`)
       return
     }
 
-    notifyInfo(`Found ${filteredVersions.length} relevant versions for ${upperPackage}.`)
+    // Filter and sort valid versions.
+    const validVersions = Object.keys(versions)
+      .filter(version => valid(version) && gte(version, startingVersion))
+      .sort(rcompare)
 
-    for (const version of filteredVersions) {
-      const dependencies = versions[version].dependencies || {}
-
-      // Check if the sub-dependency exists in the current version's dependencies
-      if (subDependency in dependencies) {
-        const subDepVersionRange = dependencies[subDependency]
-        const resolvedSubDepVersion = minVersion(subDepVersionRange)
-
-        if (resolvedSubDepVersion && gte(resolvedSubDepVersion, targetSubDepVersion)) {
-          notifyInfo(`Compatible version found: ${upperPackage}@${version} includes ${subDependency} version ${resolvedSubDepVersion}, satisfying the minimum requirement of ${targetSubDepVersion}.`)
-          return // Return when a suitable version is found
-        }
-      }
-
-      notifyInfo(`Checked ${upperPackage}@${version}; no match found for sub-dependency: ${subDependency}.`)
+    if (isEmpty(validVersions)) {
+      notifyWarn(`No valid versions for ${upperPackage}.`)
+      return
     }
 
-    notifyInfo(`No suitable version of ${upperPackage} meets the specified criteria.`)
+    notifySuccess(`Found ${validVersions.length} valid versions of ${upperPackage}.`)
+
+    // Iterate over sorted versions to find a matching one.
+    for (const version of validVersions) {
+      const dependencies = versions[version]?.dependencies || {}
+
+      // Check if the sub-dependency exists in the package's dependencies.
+      if (subDependency in dependencies) {
+        const subDepVersionRange = dependencies[subDependency]
+
+        if (subDepVersionRange) {
+          const resolvedSubDepVersion = minVersion(subDepVersionRange)
+          if (resolvedSubDepVersion && gte(resolvedSubDepVersion, targetSubDepVersion)) {
+            notifySuccess(`Compatible version: ${upperPackage}@${version} with ${subDependency} resolved to ${resolvedSubDepVersion}.`)
+            return
+          }
+
+          notifyWarn(`${upperPackage}@${version} has ${subDependency} resolved to ${resolvedSubDepVersion}, not meeting ${targetSubDepVersion}.`)
+        }
+        else {
+          notifyWarn(`Failed to resolve ${subDependency} version for ${upperPackage}@${version}.`)
+        }
+      }
+      else {
+        notifyWarn(`${subDependency} missing in ${upperPackage}@${version}.`)
+      }
+    }
+
+    notifyWarn(`No compatible version found for ${upperPackage} with required sub-dependencies.`)
   }
   catch (error) {
     handleError(error, upperPackage)
@@ -60,16 +79,15 @@ export async function findMatchingVersion(
 }
 
 /**
- * Handles errors encountered during the retrieval process.
+ * Handles potential errors that may occur during data fetching.
  *
- * @param error - The error object received from the failed request.
- * @param packageName - The name of the package that was being searched.
+ * @param error - The error encountered during data fetching.
+ * @param packageName - The name of the package being searched.
  */
-function handleError(error: any, packageName: string): void {
-  if (axios.isAxiosError(error)) {
-    notifyError(`Network error encountered while searching for ${packageName}: ${error.response?.status} - ${error.message}`)
-  }
-  else {
-    notifyError(`Unexpected error encountered while searching for ${packageName}: ${error.message}`)
-  }
+function handleError(error: unknown, packageName: string): void {
+  const errorMessage = axios.isAxiosError(error)
+    ? `Error fetching ${packageName}: ${error.response?.status} ${error.response?.statusText}. ${error.message}`
+    : `Error: ${(error as Error).message || 'An unknown error occurred.'}`
+
+  notifyError(errorMessage)
 }

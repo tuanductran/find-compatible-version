@@ -1,88 +1,21 @@
-import { FormEvent, useState } from 'react'
-import { findMatchingVersion } from 'find-compatible-version'
-import { Box, Button, Container, TextField, Typography } from '@mui/material'
+import { ThemeProvider, createTheme } from '@mui/material/styles'
+import CssBaseline from '@mui/material/CssBaseline'
+import { blue, cyan } from '@mui/material/colors'
+import CompatibleVersion from './CompatibleVersion'
 
 function App() {
-  const [dependency, setDependency] = useState<string>('')
-  const [dependencyVersion, setDependencyVersion] = useState<string>('')
-  const [subDependency, setSubDependency] = useState<string>('')
-  const [subDepVersion, setSubDepVersion] = useState<string>('')
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    await findMatchingVersion(dependency, dependencyVersion, subDependency, subDepVersion)
-  }
+  const theme = createTheme({
+    palette: {
+      primary: blue,
+      secondary: cyan,
+    },
+  })
 
   return (
-    <Container maxWidth="sm">
-      <Box
-        display="flex"
-        flexDirection="column"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="100vh"
-        textAlign="center"
-      >
-        <Typography variant="h4" component="h1" gutterBottom>
-          Find Compatible Version
-        </Typography>
-        <form onSubmit={handleSubmit} style={{ width: '100%' }}>
-          <TextField
-            fullWidth
-            label="Dependency (e.g: express)"
-            variant="outlined"
-            value={dependency}
-            onChange={e => setDependency(e.target.value)}
-            margin="normal"
-            required
-            autoComplete="off"
-            inputProps={{ 'aria-label': 'Dependency' }}
-          />
-          <TextField
-            fullWidth
-            label="Dependency Version (e.g: 4.19.2)"
-            variant="outlined"
-            value={dependencyVersion}
-            onChange={e => setDependencyVersion(e.target.value)}
-            margin="normal"
-            required
-            autoComplete="off"
-            inputProps={{ 'aria-label': 'Dependency Version' }}
-          />
-          <TextField
-            fullWidth
-            label="Sub Dependency (e.g: body-parser)"
-            variant="outlined"
-            value={subDependency}
-            onChange={e => setSubDependency(e.target.value)}
-            margin="normal"
-            required
-            autoComplete="off"
-            inputProps={{ 'aria-label': 'Sub Dependency' }}
-          />
-          <TextField
-            fullWidth
-            label="Sub Dependency Version (e.g: 1.20.2)"
-            variant="outlined"
-            value={subDepVersion}
-            onChange={e => setSubDepVersion(e.target.value)}
-            margin="normal"
-            required
-            autoComplete="off"
-            inputProps={{ 'aria-label': 'Sub Dependency Version' }}
-          />
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            fullWidth
-            sx={{ mt: 2 }}
-          >
-            Search
-          </Button>
-        </form>
-      </Box>
-    </Container>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <CompatibleVersion />
+    </ThemeProvider>
   )
 }
 
