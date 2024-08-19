@@ -3,6 +3,7 @@ export interface ToastFunction {
   warn: (message: string, additionalInfo?: unknown) => void
   info: (message: string, additionalInfo?: unknown) => void
   error: (message: string, additionalInfo?: unknown) => void
+  loading: (message: string, additionalInfo?: unknown) => void
 }
 
 let toastFn: ToastFunction | null = null
@@ -49,4 +50,13 @@ export function notifyInfo(message: string, additionalInfo?: unknown): void {
  */
 export function notifyError(message: string, additionalInfo?: unknown): void {
   toastFn?.error(message, additionalInfo)
+}
+
+/**
+ * Notifies an loading with the given message and optional additional information.
+ * @param message - The message to be displayed for an loading.
+ * @param additionalInfo - Optional additional information related to the loading.
+ */
+export function notifyLoading(message: string, additionalInfo?: unknown): void {
+  toastFn?.loading(message, additionalInfo)
 }
