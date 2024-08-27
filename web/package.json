@@ -9,7 +9,7 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "@mui/material": "^5.16.7",
+    "@mui/material": "^6.0.0",
     "find-compatible-version": "workspace:*",
     "million": "^3.1.11",
     "react": "^18.3.1",
